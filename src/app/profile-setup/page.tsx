@@ -10,7 +10,7 @@ export default function ProfileSetup() {
   const router = useRouter()
   const [username, setUsername] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
-  const [education, setEducation] = useState('')
+  const [college, setCollege] = useState('')  // updated state variable
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -22,28 +22,19 @@ export default function ProfileSetup() {
         return
       }
 
-      // Check if user already has a profile
       const { data: profile } = await supabase
-        .from('user_profiles')
+        .from('users')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', user.id)  // changed from 'user_id' to 'id'
         .single()
 
       if (profile) {
-        // User already has a profile, redirect to home
         router.push('/')
       }
     }
 
     checkUserProfile()
   }, [router])
-
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.push('/login')
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,10 +43,13 @@ export default function ProfileSetup() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      
-      // Check if username already exists
+      if (!user) {
+        setError('Not logged in')
+        return
+      }
+
       const { data: existingUser } = await supabase
-        .from('user_profiles')
+        .from('users')
         .select('username')
         .eq('username', username)
         .single()
@@ -66,13 +60,13 @@ export default function ProfileSetup() {
       }
 
       const { error: insertError } = await supabase
-        .from('user_profiles')
+        .from('users')
         .insert([
           {
-            user_id: user?.id,
+            id: user.id,  // changed from user_id to id
             username,
             date_of_birth: dateOfBirth,
-            education,
+            college,  // updated to use 'college' instead of 'education'
           }
         ])
 
@@ -122,8 +116,8 @@ export default function ProfileSetup() {
             <label className="block text-sm font-medium mb-2">Place of Education</label>
             <input
               type="text"
-              value={education}
-              onChange={(e) => setEducation(e.target.value)}
+              value={college}
+              onChange={(e) => setCollege(e.target.value)}  // updated to setCollege
               className="w-full p-2 border rounded-md dark:bg-gray-700"
               required
             />

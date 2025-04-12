@@ -15,13 +15,13 @@ export default function Home() {
     async function fetchUsername() {
       if (user) {
         const { data } = await supabase
-          .from('user_profiles')
-          .select('username')
-          .eq('user_id', user.id)
+          .from('users')
+          .select('username, name')
+          .eq('id', user.id)
           .single()
         
         if (data) {
-          setUsername(data.username)
+          setUsername(data.username || data.name || 'User')
         }
       }
     }

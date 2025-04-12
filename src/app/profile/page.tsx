@@ -6,11 +6,16 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface UserProfile {
-  username: string
-  full_name: string | null
-  bio: string | null
+  id: string
+  name: string
   email: string
+  college: string
+  semester: number
+  level: number
+  login_streak: number
   created_at: string
+  bio: string | null
+  username: string
 }
 
 export default function ProfilePage() {
@@ -22,7 +27,6 @@ export default function ProfilePage() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        // Get current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
         if (sessionError) throw sessionError
@@ -32,49 +36,24 @@ export default function ProfilePage() {
           return
         }
 
-        // Log the user ID we're querying with
-        console.log('Querying for user_id:', session.user.id)
-
-        // First check if profile exists
-        const { data: profileExists, error: checkError } = await supabase
-          .from('user_profiles')
-          .select('user_id')
-          .eq('user_id', session.user.id)
-          .single()
-
-        // If profile doesn't exist, create one
-        if (!profileExists) {
-          const { error: insertError } = await supabase
-            .from('user_profiles')
-            .insert([
-              {
-                user_id: session.user.id,
-                username: session.user.email?.split('@')[0] || 'user',
-                email: session.user.email,
-                created_at: new Date().toISOString()
-              }
-            ])
-          if (insertError) throw insertError
-        }
-
-        // Now fetch the complete profile
+        // Fetch the profile directly - no need to check existence first
         const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
+          .from('users')
           .select('*')
-          .eq('user_id', session.user.id)
+          .eq('id', session.user.id)
           .single()
 
         if (profileError) throw profileError
-        if (!profile) throw new Error('Profile not found after creation')
+        
+        if (!profile) {
+          router.push('/profile/setup')
+          return
+        }
 
         setProfile(profile)
         setIsLoading(false)
       } catch (error: any) {
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        })
+        console.error('Error details:', error)
         setIsLoading(false)
       }
     }
@@ -91,7 +70,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return null // Router will handle redirect
+    return null
   }
 
   return (
@@ -111,17 +90,29 @@ export default function ProfilePage() {
           
           <div className="mt-20 text-center">
             <h1 className="text-2xl font-bold">{profile?.username}</h1>
-            <p className="text-gray-600 dark:text-gray-400">{profile?.full_name || 'No name set'}</p>
+            <p className="text-gray-600 dark:text-gray-400">{profile?.name || 'No name set'}</p>
           </div>
 
           <div className="mt-6 space-y-4">
             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
               <h2 className="font-semibold mb-2">Bio</h2>
-              <p className="text-gray-600 dark:text-gray-300">{profile?.bio || 'No bio yet'}</p>
+              <p className="text-gray-600 dark:text-gray-300">{profile?.bio || ''}</p>
             </div>
 
             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <h2 className="font-semibold mb-2">Contact</h2>
+              <h2 className="font-semibold mb-2">Education</h2>
+              <p className="text-gray-600 dark:text-gray-300">{profile?.college}</p>
+              <p className="text-gray-600 dark:text-gray-300">Semester: {profile?.semester}</p>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <h2 className="font-semibold mb-2">Stats</h2>
+              <p className="text-gray-600 dark:text-gray-300">Level: {profile?.level}</p>
+              <p className="text-gray-600 dark:text-gray-300">Login Streak: {profile?.login_streak} days</p>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+              <h2 className="font-semibold mb-2">Email</h2>
               <p className="text-gray-600 dark:text-gray-300">{profile?.email}</p>
             </div>
 

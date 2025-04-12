@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -18,6 +19,7 @@ interface Message {
 }
 
 export default function AskBuddyPage() {
+  const router = useRouter()
   const [query, setQuery] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -42,17 +44,17 @@ export default function AskBuddyPage() {
   useEffect(() => {
     const initChat = async () => {
       try {
-        const chat = await startChat();
-        setChatSession(chat);
-        const response = await chat.sendMessage("You are a professional and knowledgeable AI tutor. Your role is to help students learn and understand academic concepts. Please introduce yourself briefly.");
-        const result = await response.response;
-        setMessages([{ role: 'assistant', content: result.text() }]);
+        const chat = await startChat()
+        setChatSession(chat)
+        const response = await chat.sendMessage("You are a professional and knowledgeable AI tutor. Your role is to help students learn and understand academic concepts. Please introduce yourself briefly.")
+        const result = await response.response
+        setMessages([{ role: 'assistant', content: result.text() }])
       } catch (error) {
-        console.error('Error initializing chat:', error);
+        console.error('Error initializing chat:', error)
       }
-    };
-    initChat();
-  }, []);
+    }
+    initChat()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -66,10 +68,7 @@ export default function AskBuddyPage() {
     try {
       const response = await chatSession.sendMessage(userQuery)
       const result = await response.response
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: result.text()
-      }])
+      setMessages(prev => [...prev, { role: 'assistant', content: result.text() }])
     } catch (error) {
       console.error('Error getting response:', error)
       setMessages(prev => [...prev, { 
@@ -89,17 +88,23 @@ export default function AskBuddyPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tools.map((tool, idx) => (
-          <Card 
-            key={idx} 
-            className="cursor-pointer hover:shadow-lg transition overflow-hidden"
-          >
-            <CardContent className={`flex items-center p-4 bg-gradient-to-r ${tool.color} text-white`}>
-              {tool.icon}
-              <span className="text-base font-medium">{tool.label}</span>
-            </CardContent>
-          </Card>
-        ))}
+        {tools.map((tool, idx) => {
+          const isUploadTool = tool.label === "Upload File/Folder"
+          return (
+            <Card 
+              key={idx} 
+              onClick={() => {
+                if (isUploadTool) router.push('/upload')
+              }}
+              className="cursor-pointer hover:shadow-lg transition overflow-hidden"
+            >
+              <CardContent className={`flex items-center p-4 bg-gradient-to-r ${tool.color} text-white`}>
+                {tool.icon}
+                <span className="text-base font-medium">{tool.label}</span>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       <Card className="mt-6">
