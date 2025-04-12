@@ -22,24 +22,59 @@ export default function ProfilePage() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        // Get current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
-        if (!session) {
+        if (sessionError) throw sessionError
+        
+        if (!session?.user) {
           router.push('/login')
           return
         }
 
-        const { data, error } = await supabase
+        // Log the user ID we're querying with
+        console.log('Querying for user_id:', session.user.id)
+
+        // First check if profile exists
+        const { data: profileExists, error: checkError } = await supabase
+          .from('user_profiles')
+          .select('user_id')
+          .eq('user_id', session.user.id)
+          .single()
+
+        // If profile doesn't exist, create one
+        if (!profileExists) {
+          const { error: insertError } = await supabase
+            .from('user_profiles')
+            .insert([
+              {
+                user_id: session.user.id,
+                username: session.user.email?.split('@')[0] || 'user',
+                email: session.user.email,
+                created_at: new Date().toISOString()
+              }
+            ])
+          if (insertError) throw insertError
+        }
+
+        // Now fetch the complete profile
+        const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('*')
           .eq('user_id', session.user.id)
           .single()
 
-        if (error) throw error
-        setProfile(data)
+        if (profileError) throw profileError
+        if (!profile) throw new Error('Profile not found after creation')
+
+        setProfile(profile)
         setIsLoading(false)
-      } catch (error) {
-        console.error('Error fetching profile:', error)
+      } catch (error: any) {
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
         setIsLoading(false)
       }
     }
@@ -99,7 +134,10 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-6 flex justify-center">
-            <button className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600">
+            <button 
+              onClick={() => router.push('/profile/edit')}
+              className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600"
+            >
               Edit Profile
             </button>
           </div>
