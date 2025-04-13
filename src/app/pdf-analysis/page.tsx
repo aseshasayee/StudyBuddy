@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase/client'
 import { useUser } from '@/contexts/user-context'
 import { FileText, Book } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { startChat } from '@/lib/gemini'
+import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 // Remove the direct import of pdfjs
 // import * as pdfjs from 'pdfjs-dist'
@@ -15,7 +18,23 @@ interface PdfFile {
   url: string
 }
 
+// Add new state variables at the top of the component
 export default function PdfAnalysis() {
+  const searchParams = useSearchParams()
+  const fileName = searchParams.get('fileName')
+  const fileId = searchParams.get('fileId')
+
+  useEffect(() => {
+    if (fileName && fileId) {
+      // Auto-select the recently uploaded PDF
+      const recentFile = {
+        name: fileName,
+        url: supabase.storage.from('pdfs').getPublicUrl(fileId).data.publicUrl
+      }
+      setSelectedPdf(recentFile.url)
+      setSelectedPdfName(recentFile.name)
+    }
+  }, [fileName, fileId])
   const { user } = useUser()
   const [file, setFile] = useState<File | null>(null)
   const [analysis, setAnalysis] = useState('')
@@ -25,6 +44,9 @@ export default function PdfAnalysis() {
   const [selectedPdf, setSelectedPdf] = useState<string | null>(null)
   const [summary, setSummary] = useState('')
   const [selectedPdfName, setSelectedPdfName] = useState('')
+  const [flashcards, setFlashcards] = useState<Array<{ question: string; answer: string }>>([])
+  const [mcqs, setMcqs] = useState<Array<{ question: string; options: string[]; answer: string }>>([])
+  const router = useRouter()
 
   useEffect(() => {
     if (user) {
@@ -106,7 +128,7 @@ export default function PdfAnalysis() {
     setError('')
 
     try {
-      // Upload file to Supabase Storage
+      // Upload and extract text as before
       const fileName = `${user.id}/${Date.now()}-${file.name}`
       const { error: uploadError } = await supabase
         .storage
@@ -115,46 +137,20 @@ export default function PdfAnalysis() {
 
       if (uploadError) throw uploadError
 
-      // Extract text from PDF
       const extractedText = await extractTextFromPdf(file)
-
-      // Send to Gemini API
-      const prompt = `
-        Analyze this study material and summarize the main points:
-        ${extractedText}
-      `
-
-      const response = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048
-          }
-        }),
-      })
-
-      const result = await response.json()
-      console.log('API Response:', result)
-
-      if (result.error) {
-        throw new Error(result.error.message || 'API Error')
-      }
-
-      setAnalysis(result.candidates[0].content.parts[0].text)
+      
+      // Use chat AI to summarize
+      const chat = await startChat()
+      const result = await chat.sendMessage(`Please summarize this text: ${extractedText}`)
+      const summary = await result.response
+      setAnalysis(summary.text())
+      
       await fetchUserPdfs()
     } catch (err: any) {
       console.error('Error:', err)
       setError(err.message || 'Failed to analyze PDF')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -168,42 +164,57 @@ export default function PdfAnalysis() {
       const pdfBlob = await response.blob()
       const extractedText = await extractTextFromPdf(new File([pdfBlob], selectedPdfName))
       
-      console.log('Extracted text length:', extractedText.length)
-      if (!extractedText.trim()) {
-        throw new Error('No text was extracted from the PDF')
-      }
+      // Use chat AI to summarize
+      const chat = await startChat()
+      const result = await chat.sendMessage(`Please summarize this text: ${extractedText}`)
+      const summary = await result.response
       
-      const prompt = `Please provide a concise summary of this text: ${extractedText}`
-      const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048
-          }
-        }),
-      })
-
-      const result = await aiResponse.json()
-      console.log('API Response:', result)
-
-      if (result.error) {
-        throw new Error(result.error.message || 'API Error')
-      }
-
-      setSummary(result.candidates[0].content.parts[0].text)
+      // Store the summary in localStorage and navigate
+      localStorage.setItem('pdfSummary', summary.text())
+      router.push('/study-materials')
     } catch (err: any) {
       console.error('Error:', err)
       setError(err.message || 'Failed to analyze PDF')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const generateStudyMaterials = async (text: string) => {
+    try {
+      const chat = await startChat()
+      
+      // Generate flashcards with clearer formatting instructions
+      const flashcardsResult = await chat.sendMessage(
+        `Generate 5 flashcards from this text. Respond ONLY with a JSON array in this exact format, with no additional text or markdown:
+        [
+          {"question": "Q1 here", "answer": "A1 here"},
+          {"question": "Q2 here", "answer": "A2 here"}
+        ]`
+      )
+      const flashcardsText = await flashcardsResult.response.text()
+      // Clean the response before parsing
+      const cleanFlashcardsText = flashcardsText.replace(/```json\n|\n```/g, '').trim()
+      setFlashcards(JSON.parse(cleanFlashcardsText))
+
+      // Generate MCQs with clearer formatting instructions
+      const mcqsResult = await chat.sendMessage(
+        `Generate 5 multiple choice questions from this text. Respond ONLY with a JSON array in this exact format, with no additional text or markdown:
+        [
+          {
+            "question": "Q1 here",
+            "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+            "answer": "Correct option here"
+          }
+        ]`
+      )
+      const mcqsText = await mcqsResult.response.text()
+      // Clean the response before parsing
+      const cleanMcqsText = mcqsText.replace(/```json\n|\n```/g, '').trim()
+      setMcqs(JSON.parse(cleanMcqsText))
+    } catch (err) {
+      console.error('Error generating study materials:', err)
+      setError('Failed to generate study materials')
     }
   }
 
@@ -292,14 +303,57 @@ export default function PdfAnalysis() {
                 </div>
 
                 {summary && (
-                  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-                    <h2 className="text-lg font-semibold mb-4">Summary</h2>
-                    <div className="prose dark:prose-invert max-w-none">
-                      {summary.split('\n').map((paragraph, index) => (
-                        <p key={index} className="mb-4">{paragraph}</p>
-                      ))}
+                  <>
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-4">
+                      <h2 className="text-lg font-semibold mb-4">Summary</h2>
+                      <div className="prose dark:prose-invert max-w-none">
+                        {summary.split('\n').map((paragraph, index) => (
+                          <p key={index} className="mb-4">{paragraph}</p>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+
+                    {flashcards.length > 0 && (
+                      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow mb-4">
+                        <h2 className="text-lg font-semibold mb-4">Flashcards</h2>
+                        <div className="space-y-4">
+                          {flashcards.map((card, index) => (
+                            <div key={index} className="border rounded-lg p-4">
+                              <h3 className="font-medium mb-2">Q: {card.question}</h3>
+                              <p className="text-gray-600 dark:text-gray-300">A: {card.answer}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {mcqs.length > 0 && (
+                      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+                        <h2 className="text-lg font-semibold mb-4">Multiple Choice Questions</h2>
+                        <div className="space-y-6">
+                          {mcqs.map((mcq, index) => (
+                            <div key={index} className="border rounded-lg p-4">
+                              <h3 className="font-medium mb-3">Q: {mcq.question}</h3>
+                              <ul className="space-y-2">
+                                {mcq.options.map((option, optIndex) => (
+                                  <li 
+                                    key={optIndex}
+                                    className={`p-2 rounded ${
+                                      option === mcq.answer 
+                                        ? 'bg-green-100 dark:bg-green-900' 
+                                        : 'bg-gray-50 dark:bg-gray-700'
+                                    }`}
+                                  >
+                                    {option}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

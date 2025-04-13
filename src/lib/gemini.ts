@@ -11,9 +11,27 @@ export const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 export async function generateContent(prompt: string) {
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${process.env.NEXT_PUBLIC_GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }]
+      })
+    });
+
+    const result = await response.json();
+    console.log('Raw API Response:', result); // Debug log
+    
+    if (result.error) {
+      throw new Error(result.error.message || 'API Error');
+    }
+    return result.candidates[0].content.parts[0].text;
   } catch (error) {
     console.error('Failed to generate content:', error);
     throw new Error('Failed to generate content. Please try again.');

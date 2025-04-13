@@ -1,164 +1,220 @@
 'use client'
 
-import { useState, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { FileText } from 'lucide-react'
-import Link from "next/link"  // Fixed import
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { 
-  Grid3X3, Upload, CalendarCheck, ClipboardList, 
-  HelpCircle, PenTool, Send, Loader2 
-} from "lucide-react"
-import { startChat } from "@/lib/gemini"
+import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { startChat } from '@/lib/gemini'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
-interface Message {
+import { useUser } from '@/contexts/user-context'
+import { supabase } from '@/lib/supabase/client'
+import { useRef } from 'react'
+
+interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
 }
 
-export default function AskBuddyPage() {
+export default function AITutor() {
   const router = useRouter()
-  const [query, setQuery] = useState("")
-  const [messages, setMessages] = useState<Message[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [chatSession, setChatSession] = useState<any>(null)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const { user } = useUser()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const tools = [
-    { icon: <ClipboardList className="w-5 h-5 mr-2" />, label: "Generate Flashcards", color: "from-pink-500 to-rose-500" },
-    { icon: <Upload className="w-5 h-5 mr-2" />, label: "Upload File/Folder", color: "from-purple-500 to-indigo-500" },
-    { icon: <FileText className="w-5 h-5 mr-2" />, label: "PDF Analysis", href: "/pdf-analysis", color: "from-blue-500 to-cyan-500" },
-    { icon: <PenTool className="w-5 h-5 mr-2" />, label: "Solve a Problem", color: "from-green-500 to-emerald-500" },
-    { icon: <CalendarCheck className="w-5 h-5 mr-2" />, label: "Plan My Schedule", color: "from-yellow-500 to-orange-500" },
-    { icon: <Grid3X3 className="w-5 h-5 mr-2" />, label: "Create Revision Test", color: "from-red-500 to-pink-500" },
-  ]
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages])
+  const handleSendMessage = async () => {
+    if (!input.trim()) return
 
-  useEffect(() => {
-    const initChat = async () => {
-      try {
-        const chat = await startChat()
-        setChatSession(chat)
-        const response = await chat.sendMessage("You are a professional and knowledgeable AI tutor. Your role is to help students learn and understand academic concepts. Please introduce yourself briefly.")
-        const result = await response.response
-        setMessages([{ role: 'assistant', content: result.text() }])
-      } catch (error) {
-        console.error('Error initializing chat:', error)
-      }
-    }
-    initChat()
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!query.trim() || isLoading || !chatSession) return
-
-    const userQuery = query.trim()
-    setIsLoading(true)
-    setMessages(prev => [...prev, { role: 'user', content: userQuery }])
-    setQuery("")
+    setLoading(true)
+    setMessages(prev => [...prev, { role: 'user', content: input }])
+    setInput('')
 
     try {
-      const response = await chatSession.sendMessage(userQuery)
-      const result = await response.response
-      setMessages(prev => [...prev, { role: 'assistant', content: result.text() }])
+      const chat = await startChat()
+      const result = await chat.sendMessage(`
+        As a friendly and supportive teacher, please help with this question. 
+        If your response contains code, wrap it in triple backticks with the language.
+        Maintain proper spacing and formatting: ${input}
+      `)
+      const response = await result.response
+      const formattedResponse = response.text()
+        .replace(/```(\w+)?\n/g, '<pre class="code-block">')
+        .replace(/```/g, '</pre>')
+        .replace(/\n/g, '<br/>')
+        .trim()
+      setMessages(prev => [...prev, { role: 'assistant', content: formattedResponse }])
     } catch (error) {
-      console.error('Error getting response:', error)
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: "I apologize, but I encountered an error. Please try asking your question again."
-      }])
+      console.error('Error:', error)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">👋 Meet Buddy – Your AI Academic Assistant</h1>
-          <p className="text-gray-600 dark:text-gray-300">Your personal AI tutor, available 24/7</p>
-        </div>
-    
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tools.map((tool, idx) => {
-            const isUploadTool = tool.label === "Upload File/Folder"
-            const isPdfAnalysis = tool.label === "PDF Analysis"
-            return (
-              <Card 
-                key={idx} 
-                onClick={() => {
-                  if (isUploadTool) router.push('/upload')
-                  if (isPdfAnalysis) router.push('/pdf-analysis')
-                }}
-                className="cursor-pointer hover:shadow-lg transition overflow-hidden"
-              >
-                <CardContent className={`flex items-center p-4 bg-gradient-to-r ${tool.color} text-white`}>
-                  {tool.icon}
-                  <span className="text-base font-medium">{tool.label}</span>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-    
-        <Card className="mt-6">
-          <CardContent className="p-4">
-            <ScrollArea className="h-[400px] pr-4" ref={scrollRef}>
-              <div className="space-y-4">
-                {messages.map((message, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] p-3 rounded-lg ${
-                        message.role === 'assistant'
-                          ? 'bg-gray-100 dark:bg-gray-800'
-                          : 'bg-blue-500 text-white'
-                      }`}
-                    >
-                      {message.content}
-                    </div>
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="max-w-[80%] p-3 rounded-lg bg-gray-100 dark:bg-gray-800">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+    <div className="min-h-screen bg-gray-900 text-white py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <motion.div 
+          className="text-center mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-4xl font-bold mb-4">👋 Meet Buddy – Your AI Academic Assistant</h1>
+          <p className="text-xl text-gray-300">Your personal AI tutor, available 24/7</p>
+        </motion.div>
 
-            <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-              <Input
-                placeholder="Ask anything..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="flex-grow"
+        <div className="grid md:grid-cols-2 gap-6 mt-12">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ scale: 1.02 }}
+            className="relative group"
+          >
+            <div 
+              className="bg-gradient-to-br from-purple-500 to-indigo-600 p-6 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".pdf"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file || !user) return
+
+                  try {
+                    const fileName = `${user.id}/${Date.now()}-${file.name}`
+                    const { error: uploadError } = await supabase
+                      .storage
+                      .from('pdfs')
+                      .upload(fileName, file)
+
+                    if (uploadError) throw uploadError
+
+                    router.push(`/pdf-analysis?fileName=${encodeURIComponent(file.name)}&fileId=${encodeURIComponent(fileName)}`)
+                  } catch (err) {
+                    console.error('Error uploading file:', err)
+                  }
+                }}
               />
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+              <div className="flex flex-col items-center text-center space-y-4 cursor-pointer">
+                <div className="p-4 bg-white/10 rounded-full">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold">Upload File/Folder</h2>
+                <p className="text-gray-300">Upload your study materials for AI analysis</p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            whileHover={{ scale: 1.02 }}
+            className="relative group"
+          >
+            <div 
+              className="bg-gradient-to-br from-blue-500 to-cyan-400 p-6 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300"
+              onClick={() => router.push('/pdf-analysis')}
+            >
+              <div className="flex flex-col items-center text-center space-y-4 cursor-pointer">
+                <div className="p-4 bg-white/10 rounded-full">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-semibold">PDF Analysis</h2>
+                <p className="text-gray-300">Get AI-powered insights from your PDFs</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mt-12 bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-xl p-6"
+        >
+          <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
+            <span className="text-3xl">👩‍🏫</span> 
+            <span>Ask Your Teacher</span>
+          </h2>
+          
+          <ScrollArea className="h-[400px] rounded-xl bg-gray-900/50 p-4 mb-6">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`mb-4 flex ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                }`}
+              >
+                <div
+                  className={`p-4 rounded-2xl max-w-[80%] ${
+                    message.role === 'user'
+                      ? 'bg-blue-600/90 text-white'
+                      : 'bg-gray-700/90 text-gray-100'
+                  }`}
+                >
+                  {message.role === 'assistant' && <span className="text-sm text-gray-300">Teacher:</span>}
+                  <div 
+                    className="mt-1 message-content"
+                    dangerouslySetInnerHTML={{ 
+                      __html: message.content 
+                    }} 
+                  />
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex items-center gap-2 text-gray-400 p-2">
+                <div className="w-2 h-2 rounded-full animate-pulse bg-gray-400"></div>
+                <div className="w-2 h-2 rounded-full animate-pulse bg-gray-400 delay-75"></div>
+                <div className="w-2 h-2 rounded-full animate-pulse bg-gray-400 delay-150"></div>
+              </div>
+            )}
+          </ScrollArea>
+
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 relative">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask anything! I'm here to help..."
+                className="min-h-[60px] bg-gray-700/50 border-gray-600 focus:border-blue-500 rounded-xl pr-24"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }}
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={loading || !input.trim()}
+                className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-white"></div>
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-white delay-75"></div>
+                    <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-white delay-150"></div>
+                  </span>
                 ) : (
-                  <Send className="w-5 h-5" />
+                  'Send'
                 )}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   )

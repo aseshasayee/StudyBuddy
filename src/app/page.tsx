@@ -9,6 +9,7 @@ import { Trophy } from 'lucide-react'
 import Image from 'next/image'
 import darkForest from '../../images/dark-forest.png'
 import Logo from '../../images/logo.svg'
+import { motion } from 'framer-motion'
 
 export default function Home() {
   const { user } = useUser()
@@ -32,6 +33,16 @@ export default function Home() {
     fetchUsername()
   }, [user])
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.2 } }
+  }
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.5 } }
+  }
+
   return (
     <div 
       style={{ 
@@ -51,35 +62,54 @@ export default function Home() {
         overflowX: 'hidden'
       }}
     >
-      <div className="relative container mx-auto px-4 py-8 space-y-8">
-        <div className="text-center space-y-4 py-12">
-          <div className="flex items-center justify-center gap-2">
+      <motion.div 
+        className="relative container mx-auto px-4 py-8 space-y-8"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
+        <motion.div 
+          className="text-center space-y-4 py-12"
+          variants={itemVariants}
+        >
+          <motion.div 
+            className="flex items-center justify-center gap-2"
+            whileHover={{ scale: 1.05 }}
+          >
             <Image
               src={Logo}
               alt="StudyBuddy Logo"
               width={32}
               height={32}
+              className="animate-pulse"
             />
             <span className="text-2xl font-semibold">StudyBuddy</span>
-          </div>
-          <h1 className="text-3xl font-bold">
+          </motion.div>
+          
+          <motion.h1 
+            className="text-3xl font-bold"
+            variants={itemVariants}
+          >
             Welcome, {username || 'Guest'} 👋
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Let's make today productive!
-          </p>
-          <div className="inline-block bg-yellow-100 dark:bg-yellow-900/50 px-6 py-2 rounded-full">
-            <Link 
-              href="/leaderboard"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/80 backdrop-blur-lg rounded-full text-white hover:bg-yellow-600/80 transition-all cursor-pointer"
-            >
-              <Trophy className="w-5 h-5" />
+          </motion.h1>
+
+          <motion.div 
+            className="inline-block bg-yellow-100 dark:bg-yellow-900/50 px-6 py-2 rounded-full"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Link href="/leaderboard" className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/80 backdrop-blur-lg rounded-full text-white hover:bg-yellow-600/80 transition-all cursor-pointer">
+              <Trophy className="w-5 h-5 animate-bounce" />
               Leaderboard
             </Link>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className="max-w-4xl mx-auto bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-lg p-6">
+        <motion.div 
+          className="max-w-4xl mx-auto bg-white/90 dark:bg-gray-800/90 rounded-lg shadow-lg p-6"
+          variants={itemVariants}
+          whileHover={{ scale: 1.01 }}
+        >
           <h2 className="text-xl font-semibold mb-6">☁️ Today's Smart Plan</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -110,41 +140,52 @@ export default function Home() {
           <div className="mt-4 text-sm text-gray-500">
             📊 Progress: 0%
           </div>
-        </div>
+        </motion.div>
 
-        <div className="max-w-4xl mx-auto">
+        <motion.div 
+          className="max-w-4xl mx-auto"
+          variants={itemVariants}
+        >
           <h2 className="text-xl font-semibold mb-6">🚀 Quick Access</h2>
           <div className="grid grid-cols-3 gap-4">
-            <a 
-              href="/dashboard" 
-              onClick={(e) => {
-                e.preventDefault()
-                if (user) {
-                  router.push('/dashboard')
-                } else {
-                  router.push('/login')
-                }
-              }}
-              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow cursor-pointer"
-            >
-              <span className="text-2xl mb-2">📊</span>
-              <p className="font-medium">Dashboard</p>
-            </a>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow cursor-pointer">
-              <span className="text-2xl mb-2">📝</span>
-              <p className="font-medium">Flashcards</p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow cursor-pointer">
-              <span className="text-2xl mb-2">📅</span>
-              <p className="font-medium">Study Planner</p>
-            </div>
-            <a href="/ai-tutor" className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow cursor-pointer">
-              <span className="text-2xl mb-2">🤖</span>
-              <p className="font-medium">AI Tutor</p>
-            </a>
+            {[
+              { icon: '📊', title: 'Dashboard', href: '/dashboard' },
+              { icon: '📝', title: 'Flashcards', href: '/flashcards' },
+              { icon: '📅', title: 'Study Planner', href: '/planner' },
+              { icon: '🤖', title: 'AI Tutor', href: '/ai-tutor' }
+            ].map((item, index) => (
+              <motion.a
+                key={item.title}
+                href={item.href}
+                className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center cursor-pointer"
+                whileHover={{ 
+                  scale: 1.05,
+                  boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)"
+                }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <motion.span 
+                  className="text-2xl mb-2 block"
+                  animate={{ 
+                    rotate: [0, 10, -10, 0],
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3
+                  }}
+                >
+                  {item.icon}
+                </motion.span>
+                <p className="font-medium">{item.title}</p>
+              </motion.a>
+            ))}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   )
 }

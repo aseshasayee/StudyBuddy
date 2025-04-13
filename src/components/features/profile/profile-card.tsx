@@ -40,8 +40,8 @@ export default function ProfileCard() {
         </div>
 
         <div className="flex flex-col">
-          <span className="text-sm text-gray-500 dark:text-gray-400">Education</span>
-          <span className="font-medium">{userProfile.education}</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">College</span>
+          <span className="font-medium">{userProfile.college}</span> {/* Updated here */}
         </div>
 
         <div className="flex flex-col">
