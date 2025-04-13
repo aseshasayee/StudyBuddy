@@ -22,7 +22,13 @@ export default function AITutor() {
   const { user } = useUser()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  // Add this to your existing state declarations
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: 'assistant',
+      content: 'Hi! 👋 I\'m your AI study buddy. Feel free to ask me anything about your studies, and I\'ll do my best to help you understand!'
+    }
+  ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -138,21 +144,30 @@ export default function AITutor() {
             </div>
           </motion.div>
         </div>
+        
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           className="mt-12 bg-gray-800/50 backdrop-blur-sm rounded-xl shadow-xl p-6"
         >
-          <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-            <span className="text-3xl">👩‍🏫</span> 
-            <span>Ask Your Teacher</span>
-          </h2>
+          <motion.h2 
+            className="text-2xl font-semibold mb-6 flex items-center gap-2"
+            initial={{ x: -20 }}
+            animate={{ x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="text-3xl">🤖</span> 
+            <span>Ask me anything</span>
+          </motion.h2>
           
           <ScrollArea className="h-[400px] rounded-xl bg-gray-900/50 p-4 mb-6">
             {messages.map((message, index) => (
-              <div
+              <motion.div
                 key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
                 className={`mb-4 flex ${
                   message.role === 'user' ? 'justify-end' : 'justify-start'
                 }`}
@@ -160,36 +175,53 @@ export default function AITutor() {
                 <div
                   className={`p-4 rounded-2xl max-w-[80%] ${
                     message.role === 'user'
-                      ? 'bg-blue-600/90 text-white'
-                      : 'bg-gray-700/90 text-gray-100'
+                      ? 'bg-blue-600/90 text-white shadow-lg'
+                      : 'bg-gray-700/90 text-gray-100 shadow-lg'
                   }`}
                 >
-                  {message.role === 'assistant' && <span className="text-sm text-gray-300">Teacher:</span>}
+                  {message.role === 'assistant' && (
+                    <motion.span 
+                      className="text-sm text-blue-300 font-medium"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      AI Assistant
+                    </motion.span>
+                  )}
                   <div 
-                    className="mt-1 message-content"
+                    className="mt-1 message-content leading-relaxed"
                     dangerouslySetInnerHTML={{ 
                       __html: message.content 
                     }} 
                   />
                 </div>
-              </div>
+              </motion.div>
             ))}
             {loading && (
-              <div className="flex items-center gap-2 text-gray-400 p-2">
-                <div className="w-2 h-2 rounded-full animate-pulse bg-gray-400"></div>
-                <div className="w-2 h-2 rounded-full animate-pulse bg-gray-400 delay-75"></div>
-                <div className="w-2 h-2 rounded-full animate-pulse bg-gray-400 delay-150"></div>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex items-center gap-2 text-blue-400 p-2"
+              >
+                <div className="w-2 h-2 rounded-full animate-bounce bg-blue-400"></div>
+                <div className="w-2 h-2 rounded-full animate-bounce bg-blue-400 delay-75"></div>
+                <div className="w-2 h-2 rounded-full animate-bounce bg-blue-400 delay-150"></div>
+              </motion.div>
             )}
           </ScrollArea>
 
           <div className="flex gap-3 items-end">
-            <div className="flex-1 relative">
+            <motion.div 
+              className="flex-1 relative"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+            >
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask anything! I'm here to help..."
-                className="min-h-[60px] bg-gray-700/50 border-gray-600 focus:border-blue-500 rounded-xl pr-24"
+                className="min-h-[60px] bg-gray-700/50 border-gray-600 focus:border-blue-500 rounded-xl pr-24 text-lg transition-all duration-200 focus:shadow-lg"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault()
@@ -200,7 +232,7 @@ export default function AITutor() {
               <Button
                 onClick={handleSendMessage}
                 disabled={loading || !input.trim()}
-                className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2"
+                className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 transition-all duration-200 hover:scale-105"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -209,10 +241,18 @@ export default function AITutor() {
                     <div className="w-1.5 h-1.5 rounded-full animate-pulse bg-white delay-150"></div>
                   </span>
                 ) : (
-                  'Send'
+                  <motion.span 
+                    whileHover={{ scale: 1.1 }}
+                    className="flex items-center gap-2"
+                  >
+                    Send
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </motion.span>
                 )}
               </Button>
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
