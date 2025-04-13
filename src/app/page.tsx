@@ -78,7 +78,7 @@ type StudyPlanItemProps = {
 const StudyPlanItem: React.FC<StudyPlanItemProps> = ({ emoji, title, time, onClick, progress = 0 }) => (
   <div className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-800/80 to-gray-700/80 backdrop-blur-md rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border border-white/10">
     <div className="flex items-center gap-4">
-      <div className="text-2xl w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-white/20">
+      <div className="text-2xl w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-br from-purple-500/30 to-purple-500/30 border border-white/20">
         {emoji}
       </div>
       <div>
@@ -90,7 +90,7 @@ const StudyPlanItem: React.FC<StudyPlanItemProps> = ({ emoji, title, time, onCli
       <div className="hidden md:block">
         <div className="w-24 h-2 bg-gray-700 rounded-full">
           <div 
-            className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full" 
+            className="h-full bg-gradient-to-r from-red-500 to-gray-500 rounded-full" 
             style={{ width: `${progress}%` }}
           ></div>
         </div>

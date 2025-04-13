@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Book, BookOpen, Brain, FileText } from 'lucide-react'
+import { Book, BookOpen, Brain, FileText, AlertTriangle } from 'lucide-react'
+import { useQuizSecurity } from '@/hooks/useQuizSecurity'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -32,6 +33,16 @@ export default function StudyMaterialsPage() {
   const [error, setError] = useState('')
   const [score, setScore] = useState<number | null>(null)
   const [showAnswers, setShowAnswers] = useState(false)
+  const [showWarning, setShowWarning] = useState(false)
+  const securityState = useQuizSecurity(() => {
+    setShowWarning(true)
+    const tabsList = document.querySelector('[role="tablist"]') as HTMLElement
+    const flashcardsTab = tabsList?.querySelector('[value="flashcards"]') as HTMLElement
+    if (flashcardsTab) {
+      flashcardsTab.click()
+      setTimeout(() => setShowWarning(false), 3000)
+    }
+  })
 
   useEffect(() => {
     const generateMaterials = async () => {
@@ -126,6 +137,7 @@ export default function StudyMaterialsPage() {
             <TabsTrigger 
               value="quiz"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              onClick={() => securityState.enterFullscreen()}
             >
               <Brain className="w-4 h-4 mr-2" />
               Quiz
@@ -193,6 +205,18 @@ export default function StudyMaterialsPage() {
             </motion.div>
           </TabsContent>
           <TabsContent value="quiz" className="space-y-6">
+            {/* Quiz Security Warning */}
+            {showWarning && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-500/20 text-red-100 p-4 rounded-xl mb-4 flex items-center justify-center gap-2"
+              >
+                <AlertTriangle className="w-5 h-5" />
+                Warning: Tab switching detected! Please stay focused on the quiz.
+              </motion.div>
+            )}
+            
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
