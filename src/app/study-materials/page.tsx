@@ -21,6 +21,8 @@ interface StudyMaterials {
 }
 
 export default function StudyMaterialsPage() {
+  // Add flippedCards state with other state declarations at the top
+  const [flippedCards, setFlippedCards] = useState<number[]>([])
   const [materials, setMaterials] = useState<StudyMaterials>({
     summary: '',
     flashcards: [],
@@ -153,14 +155,43 @@ export default function StudyMaterialsPage() {
               className="grid md:grid-cols-2 gap-6"
             >
               {materials.flashcards.map((card, index) => (
-                <Card key={index} className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 backdrop-blur-sm border-gray-700 p-6">
-                  <h3 className="font-semibold text-xl mb-4">Q: {card.question}</h3>
-                  <p className="text-gray-300">A: {card.answer}</p>
-                </Card>
+                <motion.div
+                  key={index}
+                  className="relative h-[200px] cursor-pointer perspective-1000"
+                  whileHover={{ scale: 1.02 }}
+                  onClick={() => {
+                    setFlippedCards(prev => 
+                      prev.includes(index)
+                        ? prev.filter(i => i !== index)
+                        : [...prev, index]
+                    )
+                  }}
+                >
+                  <div
+                    className={`w-full h-full transition-all duration-500 preserve-3d relative ${
+                      flippedCards.includes(index) ? 'rotate-y-180' : ''
+                    }`}
+                  >
+                    {/* Front of card (Question) */}
+                    <div className="absolute w-full h-full backface-hidden">
+                      <Card className="w-full h-full bg-gradient-to-br from-red-500/20 to-red-600/10 backdrop-blur-sm border-red-700/50 p-6 flex flex-col items-center justify-center">
+                        <h3 className="font-semibold text-xl text-center">{card.question}</h3>
+                        <span className="mt-4 text-sm text-red-400/70">Click to reveal answer</span>
+                      </Card>
+                    </div>
+                    
+                    {/* Back of card (Answer) */}
+                    <div className="absolute w-full h-full backface-hidden rotate-y-180">
+                      <Card className="w-full h-full bg-gradient-to-br from-green-500/20 to-green-600/10 backdrop-blur-sm border-green-700/50 p-6 flex flex-col items-center justify-center">
+                        <p className="text-gray-300 text-center text-lg">{card.answer}</p>
+                        <span className="mt-4 text-sm text-green-400/70">Click to see question</span>
+                      </Card>
+                    </div>
+                  </div>
+                </motion.div>
               ))}
             </motion.div>
           </TabsContent>
-
           <TabsContent value="quiz" className="space-y-6">
             <motion.div 
               initial={{ opacity: 0 }}

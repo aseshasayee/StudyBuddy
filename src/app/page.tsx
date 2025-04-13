@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import styles from './gaming-styles.module.css'
 import { 
   Trophy, Bookmark, Calendar, BookOpen, 
   BarChart2, Activity, BookMarked, Bot,
@@ -22,10 +23,10 @@ type QuickAccessCardProps = {
   bgColor?: string;
 };
 
-const QuickAccessCard: React.FC<QuickAccessCardProps> = ({ icon, title, href, onClick, bgColor = "from-blue-500/20 to-purple-500/20" }) => (
+const QuickAccessCard: React.FC<QuickAccessCardProps> = ({ icon, title, href, onClick, bgColor = "from-blue-600/30 to-purple-700/30" }) => (
   <div 
     onClick={onClick}
-    className={`bg-gradient-to-br ${bgColor} backdrop-blur-md p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer text-center flex flex-col items-center justify-center gap-4 border border-white/20`}
+    className={`${styles.glowContainer} ${styles.pixelBorder} bg-gradient-to-br ${bgColor} backdrop-blur-md p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer text-center flex flex-col items-center justify-center gap-4 border border-white/20`}
   >
     <div className="p-3 bg-white/10 rounded-full">
       {icon}
@@ -33,6 +34,38 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({ icon, title, href, on
     <p className="font-medium text-white">{title}</p>
   </div>
 );
+
+// Update the quickAccessItems array
+const quickAccessItems = [
+  { 
+    icon: <BarChart2 className="w-8 h-8 text-blue-400" />, 
+    title: "Dashboard", 
+    href: "/dashboard",
+    onClick: () => user ? router.push('/dashboard') : router.push('/login'),
+    bgColor: "from-blue-700/30 to-purple-800/30"
+  },
+  { 
+    icon: <BookMarked className="w-8 h-8 text-purple-400" />, 
+    title: "Flashcards", 
+    href: "/flashcards",
+    onClick: () => user ? router.push('/flashcards') : router.push('/login'),
+    bgColor: "from-purple-800/30 to-blue-700/30"
+  },
+  { 
+    icon: <Calendar className="w-8 h-8 text-blue-400" />, 
+    title: "Study Planner", 
+    href: "/planner",
+    onClick: () => user ? router.push('/planner') : router.push('/login'),
+    bgColor: "from-blue-800/30 to-purple-700/30"
+  },
+  { 
+    icon: <Bot className="w-8 h-8 text-purple-400" />,
+    title: "AI Tutor", 
+    href: "/ai-tutor",
+    onClick: () => router.push('/ai-tutor'),
+    bgColor: "from-purple-700/30 to-blue-800/30"
+  }
+];
 
 type StudyPlanItemProps = {
   emoji: string;
@@ -64,7 +97,7 @@ const StudyPlanItem: React.FC<StudyPlanItemProps> = ({ emoji, title, time, onCli
       </div>
       <button 
         onClick={onClick}
-        className="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-6 py-2.5 rounded-lg hover:from-purple-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all font-medium"
+        className={`${styles.pixelButton} ${styles.hoverScale}`}
       >
         Start
       </button>
@@ -162,34 +195,35 @@ export default function Home() {
   };
 
   // Quick access items with gamified colors
+  // Update the quickAccessItems array
   const quickAccessItems = [
     { 
-      icon: <BarChart2 className="w-8 h-8 text-cyan-400" />, 
+      icon: <BarChart2 className="w-8 h-8 text-gray-400" />, 
       title: "Dashboard", 
       href: "/dashboard",
       onClick: () => user ? router.push('/dashboard') : router.push('/login'),
-      bgColor: "from-cyan-600/30 to-blue-700/30"
+      bgColor: "from-gray-900/30 to-slate-800/30"
     },
     { 
       icon: <BookMarked className="w-8 h-8 text-purple-400" />, 
       title: "Flashcards", 
       href: "/flashcards",
       onClick: () => user ? router.push('/flashcards') : router.push('/login'),
-      bgColor: "from-purple-600/30 to-pink-600/30"
+      bgColor: "from-slate-900/30 to-purple-900/30"
     },
     { 
-      icon: <Calendar className="w-8 h-8 text-emerald-400" />, 
+      icon: <Calendar className="w-8 h-8 text-rose-400" />, 
       title: "Study Planner", 
       href: "/planner",
       onClick: () => user ? router.push('/planner') : router.push('/login'),
-      bgColor: "from-emerald-600/30 to-teal-600/30"
+      bgColor: "from-black/30 to-slate-900/30"
     },
     { 
-      icon: <Bot className="w-8 h-8 text-amber-400" />,
+      icon: <Bot className="w-8 h-8 text-indigo-400" />,
       title: "AI Tutor", 
       href: "/ai-tutor",
       onClick: () => router.push('/ai-tutor'),
-      bgColor: "from-amber-600/30 to-orange-600/30"
+      bgColor: "from-slate-900/30 to-black/30"
     }
   ];
 
@@ -217,7 +251,7 @@ export default function Home() {
           <div className="animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-purple-500"></div>
         </div>
       ) : (
-        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl">
+        <div className={`container mx-auto px-4 sm:px-6 py-8 max-w-6xl ${styles.glowContainer}`}>
           {/* Header with gamified elements */}
           <header className="mb-10 pt-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -245,9 +279,9 @@ export default function Home() {
                 
                 <Link 
                   href="/leaderboard"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 backdrop-blur-lg rounded-full text-white hover:from-amber-600 hover:to-orange-700 transition-all shadow-lg"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-800 to-blue-900 hover:from-blue-900 hover:to-gray-800 backdrop-blur-lg rounded-full text-white transition-all shadow-lg border border-white/10 transform hover:scale-105"
                 >
-                  <Trophy className="w-5 h-5" />
+                  <Trophy className="w-5 h-5 text-yellow-400" />
                   Leaderboard
                 </Link>
               </div>
@@ -262,7 +296,7 @@ export default function Home() {
               <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl"></div>
               
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">
+              <h1 className={`text-4xl md:text-5xl font-bold mb-4 text-white ${styles.glowText}`}>
                 Welcome, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{username || 'Guest'}</span> 👋
               </h1>
               
@@ -367,7 +401,7 @@ export default function Home() {
                   title={item.title}
                   href={item.href}
                   onClick={item.onClick}
-                  bgColor={item.bgColor}
+                  className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 hover:from-purple-900/40 hover:to-blue-900/40 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white/10 flex flex-col items-center justify-center gap-4 transform hover:scale-105 transition-all"
                 />
               ))}
             </div>
@@ -433,7 +467,7 @@ export default function Home() {
                     <p className="text-gray-300">{item.time} ({item.duration} min)</p>
                     <div className="mt-2 w-full h-2 bg-gray-800 rounded-full">
                       <div 
-                        className="h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full" 
+                        className="h-full bg-gradient-to-r from-gray-600 to-blue-800 rounded-full animate-gradient" 
                         style={{ width: `${item.progress}%` }}
                       ></div>
                     </div>

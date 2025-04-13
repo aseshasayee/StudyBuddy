@@ -1,103 +1,90 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
-import { Trophy, Medal } from 'lucide-react'
-
-interface UserRank {
-  username: string
-  level: number
-  college: string
-  bio: string
-}
+import { Trophy, Medal, Star } from 'lucide-react'
 
 export default function LeaderboardPage() {
-  const [users, setUsers] = useState<UserRank[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        let { data, error } = await supabase
-          .from('users')
-          .select('username, level, college, bio')
-          .not('username', 'is', null) // Only get users with usernames
-          .order('level', { ascending: false })
-          .order('username', { ascending: true }); // Secondary sort for consistent ordering
-
-        if (error) {
-          console.error('Fetch error:', error);
-          throw error;
-        }
-
-        // Process the data
-        const processedUsers = data?.map(user => ({
-          username: user.username || 'Anonymous',
-          level: user.level || 0,
-          college: user.college || 'Not specified',
-          bio: user.bio || 'No bio available'
-        })) || [];
-
-        console.log('Fetched users:', processedUsers); // Debug log
-        setUsers(processedUsers);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, []);
-
-  const getRankBadge = (rank: number) => {
-    switch (rank) {
-      case 0:
-        return <Trophy className="w-6 h-6 text-yellow-400" />
-      case 1:
-        return <Medal className="w-6 h-6 text-gray-300" />
-      case 2:
-        return <Medal className="w-6 h-6 text-amber-600" />
-      default:
-        return <span className="w-6 h-6 flex items-center justify-center font-bold">{rank + 1}</span>
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Loading...</div>
-      </div>
-    )
-  }
-
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">🏆 Leaderboard</h1>
-        
-        <div className="bg-gradient-to-br from-cyan-400 to-blue-500 p-6 rounded-2xl shadow-lg">
-          <div className="space-y-4">
-            {users.map((user, index) => (
-              <div
-                key={index}
-                className="bg-white/20 backdrop-blur-lg p-4 rounded-xl flex items-center gap-4"
-              >
-                <div className="flex items-center justify-center w-12">
-                  {getRankBadge(index)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-white">{user.username}</h3>
-                    <span className="bg-white/30 px-2 py-1 rounded text-sm text-white">
-                      Level {user.level}
-                    </span>
-                  </div>
-                  <p className="text-white/80 text-sm">{user.college}</p>
-                  <p className="text-white/60 text-sm truncate">{user.bio}</p>
-                </div>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold flex items-center justify-center gap-3 mb-4">
+            <Trophy className="w-8 h-8 text-yellow-400" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+              Leaderboard
+            </span>
+          </h1>
+          <p className="text-gray-400">Top performers in your learning journey</p>
+        </div>
+
+        <div className="space-y-4">
+          {/* Top player card */}
+          <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-md p-6 rounded-2xl border border-yellow-500/20 transform hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-yellow-400" />
               </div>
-            ))}
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">Aakash</h3>
+                  <span className="px-3 py-1 bg-yellow-500/20 rounded-full text-yellow-300 text-sm">
+                    Level 3
+                  </span>
+                </div>
+                <p className="text-gray-400 text-sm">VIT Chennai</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Other players */}
+          <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 backdrop-blur-md p-6 rounded-2xl border border-white/10 transform hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gray-700/50 flex items-center justify-center">
+                <Medal className="w-6 h-6 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">John</h3>
+                  <span className="px-3 py-1 bg-gray-700/50 rounded-full text-gray-300 text-sm">
+                    Level 1
+                  </span>
+                </div>
+                <p className="text-gray-400 text-sm">VELS</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 backdrop-blur-md p-6 rounded-2xl border border-white/10 transform hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gray-700/50 flex items-center justify-center">
+                <Medal className="w-6 h-6 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">Saksham</h3>
+                  <span className="px-3 py-1 bg-gray-700/50 rounded-full text-gray-300 text-sm">
+                    Level 1
+                  </span>
+                </div>
+                <p className="text-gray-400 text-sm">SRMIST KTR</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 backdrop-blur-md p-6 rounded-2xl border border-white/10 transform hover:scale-[1.02] transition-all">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gray-700/50 flex items-center justify-center">
+                <Medal className="w-6 h-6 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold">sesh</h3>
+                  <span className="px-3 py-1 bg-gray-700/50 rounded-full text-gray-300 text-sm">
+                    Level 1
+                  </span>
+                </div>
+                <p className="text-gray-400 text-sm">Not specified</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
