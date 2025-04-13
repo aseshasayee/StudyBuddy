@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation'
 export default function EditProfilePage() {
   const { user } = useUser()
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const [formData, setFormData] = useState({
     username: '',
@@ -15,25 +17,20 @@ export default function EditProfilePage() {
     bio: '',
     college: '',
     semester: 1,
-    email: '',
   })
-
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     const fetchProfile = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          router.push('/login')
-          return
-        }
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
+      try {
         const { data, error } = await supabase
           .from('users')
-          .select('username, name, bio, college, semester, email')
-          .eq('id', session.user.id)
+          .select('username, name, bio, college, semester')
+          .eq('id', user.id)
           .single()
 
         if (error) throw error
@@ -45,27 +42,24 @@ export default function EditProfilePage() {
             bio: data.bio || '',
             college: data.college || '',
             semester: data.semester || 1,
-            email: data.email || ''
           })
         }
-
-        setIsLoading(false)
       } catch (error: any) {
         console.error('Error fetching profile:', error)
         setError('Failed to fetch profile')
+      } finally {
         setIsLoading(false)
       }
     }
 
     fetchProfile()
-  }, [router])
+  }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('No session')
+      if (!user) throw new Error('No session')
 
       const { error } = await supabase
         .from('users')
@@ -75,9 +69,8 @@ export default function EditProfilePage() {
           bio: formData.bio || null,
           college: formData.college,
           semester: formData.semester,
-          email: formData.email || null,
         })
-        .eq('id', session.user.id)
+        .eq('id', user.id)
 
       if (error) throw error
 
@@ -104,7 +97,6 @@ export default function EditProfilePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username */}
           <div>
             <label className="block text-sm font-medium mb-2">Username</label>
             <input
@@ -116,7 +108,6 @@ export default function EditProfilePage() {
             />
           </div>
 
-          {/* Full Name */}
           <div>
             <label className="block text-sm font-medium mb-2">Full Name</label>
             <input
@@ -127,18 +118,6 @@ export default function EditProfilePage() {
             />
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full p-2 border rounded-md dark:bg-gray-700"
-            />
-          </div>
-
-          {/* Bio */}
           <div>
             <label className="block text-sm font-medium mb-2">Bio</label>
             <textarea
@@ -149,7 +128,6 @@ export default function EditProfilePage() {
             />
           </div>
 
-          {/* College */}
           <div>
             <label className="block text-sm font-medium mb-2">College</label>
             <input
@@ -160,7 +138,6 @@ export default function EditProfilePage() {
             />
           </div>
 
-          {/* Semester */}
           <div>
             <label className="block text-sm font-medium mb-2">Semester</label>
             <input

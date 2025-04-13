@@ -17,12 +17,23 @@ export default function Signup() {
     setError(null)
 
     try {
+      // Enhanced email validation
+      if (!email.includes('@') || !email.includes('.')) {
+        setError('Please enter a valid email address')
+        setLoading(false)
+        return
+      }
+
+      // Sign up with email confirmation required
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+          data: {
+            email: email
+          }
+        }
       })
 
       if (error) {
@@ -30,11 +41,17 @@ export default function Signup() {
         return
       }
 
+      if (data?.user?.identities?.length === 0) {
+        setError('This email is already registered')
+        return
+      }
+
       if (data) {
-        setError('Please check your email for verification link')
+        setError('Please check your email for the verification link')
+        // Wait longer to ensure user sees the message
         setTimeout(() => {
-          router.push('/profile-setup')
-        }, 3000)
+          router.push('/login')
+        }, 5000)
       }
     } catch (err) {
       setError('An unexpected error occurred')

@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useUser } from '@/contexts/user-context'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+// Add this import at the top of the file
+import Image from 'next/image'
+import Logo from '../../../images/logo.svg'
 
 export function Navbar() {
   const { user, setUser } = useUser()  // Add setUser
@@ -30,7 +33,12 @@ export function Navbar() {
     <nav className="backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border-b border-gray-200 dark:border-gray-700 shadow-sm">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <span className="text-2xl">📚</span>
+          <Image
+            src={Logo}
+            alt="StudyBuddy Logo"
+            width={32}
+            height={32}
+          />
           <span className="font-bold text-xl">StudyBuddy</span>
         </a>
         <div className="flex items-center gap-4">

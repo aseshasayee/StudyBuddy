@@ -19,7 +19,9 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
+  // In the profile view component
   const { user } = useUser()
+  
   const router = useRouter()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -36,11 +38,12 @@ export default function ProfilePage() {
           return
         }
 
-        // Fetch the profile directly - no need to check existence first
+        // Update the profile fetch to include the auth email
         const { data: profile, error: profileError } = await supabase
           .from('users')
-          .select('*')
+          .update({ email: session.user.email }) // Update email from auth
           .eq('id', session.user.id)
+          .select('*')
           .single()
 
         if (profileError) throw profileError

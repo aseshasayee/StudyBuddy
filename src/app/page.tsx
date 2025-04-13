@@ -4,7 +4,11 @@ import React, { useState, useEffect } from 'react'  // Add explicit React import
 import { useUser } from '@/contexts/user-context'
 import { supabase } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import darkForest from '@/images/dark-forest.png'
+import Link from 'next/link'
+import { Trophy } from 'lucide-react'
+import Image from 'next/image'
+import darkForest from '../../images/dark-forest.png'
+import Logo from '../../images/logo.svg'
 
 export default function Home() {
   const { user } = useUser()
@@ -49,14 +53,29 @@ export default function Home() {
     >
       <div className="relative container mx-auto px-4 py-8 space-y-8">
         <div className="text-center space-y-4 py-12">
+          <div className="flex items-center justify-center gap-2">
+            <Image
+              src={Logo}
+              alt="StudyBuddy Logo"
+              width={32}
+              height={32}
+            />
+            <span className="text-2xl font-semibold">StudyBuddy</span>
+          </div>
           <h1 className="text-3xl font-bold">
-            Good Morning, {username || 'Guest'} 👋
+            Welcome, {username || 'Guest'} 👋
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Let's make today productive!
           </p>
           <div className="inline-block bg-yellow-100 dark:bg-yellow-900/50 px-6 py-2 rounded-full">
-            🏆 Level 3: Study Streaker
+            <Link 
+              href="/leaderboard"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/80 backdrop-blur-lg rounded-full text-white hover:bg-yellow-600/80 transition-all cursor-pointer"
+            >
+              <Trophy className="w-5 h-5" />
+              Leaderboard
+            </Link>
           </div>
         </div>
 
