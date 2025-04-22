@@ -42,28 +42,28 @@ const quickAccessItems = [
     title: "Dashboard", 
     href: "/dashboard",
     onClick: () => user ? router.push('/dashboard') : router.push('/login'),
-    bgColor: "from-blue-700/30 to-purple-800/30"
+    bgColor: "from-blue-600/20 to-purple-700/20"
   },
   { 
     icon: <BookMarked className="w-8 h-8 text-purple-400" />, 
     title: "Flashcards", 
     href: "/flashcards",
     onClick: () => user ? router.push('/flashcards') : router.push('/login'),
-    bgColor: "from-purple-800/30 to-blue-700/30"
+    bgColor: "from-purple-700/20 to-blue-600/20"
   },
   { 
     icon: <Calendar className="w-8 h-8 text-blue-400" />, 
     title: "Study Planner", 
     href: "/planner",
     onClick: () => user ? router.push('/planner') : router.push('/login'),
-    bgColor: "from-blue-800/30 to-purple-700/30"
+    bgColor: "from-blue-600/20 to-purple-700/20"
   },
   { 
     icon: <Bot className="w-8 h-8 text-purple-400" />,
     title: "AI Tutor", 
     href: "/ai-tutor",
     onClick: () => router.push('/ai-tutor'),
-    bgColor: "from-purple-700/30 to-blue-800/30"
+    bgColor: "from-purple-700/20 to-blue-600/20"
   }
 ];
 
@@ -195,35 +195,35 @@ export default function Home() {
   };
 
   // Quick access items with gamified colors
-  // Update the quickAccessItems array
+  // Quick access items with gamified colors
   const quickAccessItems = [
     { 
-      icon: <BarChart2 className="w-8 h-8 text-gray-400" />, 
+      icon: <BarChart2 className="w-8 h-8 text-emerald-400" />, 
       title: "Dashboard", 
       href: "/dashboard",
       onClick: () => user ? router.push('/dashboard') : router.push('/login'),
-      bgColor: "from-gray-900/30 to-slate-800/30"
+      bgColor: "from-emerald-600/30 to-teal-700/30"
     },
     { 
-      icon: <BookMarked className="w-8 h-8 text-purple-400" />, 
+      icon: <BookMarked className="w-8 h-8 text-sky-400" />, 
       title: "Flashcards", 
       href: "/flashcards",
       onClick: () => user ? router.push('/flashcards') : router.push('/login'),
-      bgColor: "from-slate-900/30 to-purple-900/30"
+      bgColor: "from-sky-600/30 to-blue-700/30"
     },
     { 
-      icon: <Calendar className="w-8 h-8 text-rose-400" />, 
+      icon: <Calendar className="w-8 h-8 text-violet-400" />, 
       title: "Study Planner", 
       href: "/planner",
       onClick: () => user ? router.push('/planner') : router.push('/login'),
-      bgColor: "from-black/30 to-slate-900/30"
+      bgColor: "from-violet-600/30 to-purple-700/30"
     },
     { 
-      icon: <Bot className="w-8 h-8 text-indigo-400" />,
+      icon: <Bot className="w-8 h-8 text-amber-400" />,
       title: "AI Tutor", 
       href: "/ai-tutor",
       onClick: () => router.push('/ai-tutor'),
-      bgColor: "from-slate-900/30 to-black/30"
+      bgColor: "from-amber-600/30 to-orange-700/30"
     }
   ];
 
@@ -389,7 +389,7 @@ export default function Home() {
           {/* Quick Access Section - Gamified */}
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-2">
-              <Zap className="w-6 h-6 text-yellow-400" />
+              <Zap className="w-6 h-6 text-red-400" />
               Power-ups
             </h2>
             
@@ -401,7 +401,7 @@ export default function Home() {
                   title={item.title}
                   href={item.href}
                   onClick={item.onClick}
-                  className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 hover:from-purple-900/40 hover:to-blue-900/40 backdrop-blur-md p-6 rounded-xl shadow-xl border border-white/10 flex flex-col items-center justify-center gap-4 transform hover:scale-105 transition-all"
+                  bgColor={item.bgColor}
                 />
               ))}
             </div>

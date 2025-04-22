@@ -1,13 +1,6 @@
 
 .glowContainer {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpolygon points='0,12 12,0 24,12 12,24' fill='%234a90e2' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E") 12 12, pointer;
-}
-
-.pixelButton {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28' fill='none'%3E%3Cpolygon points='4,14 14,4 24,14 14,24' fill='%2300c853' stroke='%23ffffff' stroke-width='2'/%3E%3C/svg%3E") 14 14, pointer;
-}
-
-.glowContainer {
   position: relative;
   overflow: hidden;
 }
@@ -43,7 +36,7 @@
   left: -4px;
   right: -4px;
   bottom: -4px;
-  background: linear-gradient(45deg, #ff3d00, #00c853, #2196f3);
+  background: linear-gradient(45deg, rgba(88, 101, 242, 0.3), rgba(147, 51, 234, 0.3));
   z-index: -1;
   border-radius: inherit;
   animation: borderGlow 3s ease infinite;
@@ -78,7 +71,7 @@
 
 .pixelButton {
   position: relative;
-  background: linear-gradient(45deg, #2196f3, #00c853);
+  background: linear-gradient(45deg, rgba(88, 101, 242, 0.3), rgba(147, 51, 234, 0.3));
   border: none;
   padding: 12px 24px;
   color: white;
