@@ -35,7 +35,7 @@ const QuickAccessCard: React.FC<QuickAccessCardProps> = ({ icon, title, href, on
   </div>
 );
 
-// Update the quickAccessItems array
+// Update the quickAccessItems array to use proper router reference
 const quickAccessItems = [
   { 
     icon: <BarChart2 className="w-8 h-8 text-blue-400" />, 
@@ -332,7 +332,7 @@ export default function Home() {
                     Log In
                   </Link>
                   <Link 
-                    href="/register"
+                    href="/signup" // Change from /register to /signup
                     className="px-8 py-3 bg-white hover:bg-gray-100 text-blue-600 font-semibold rounded-xl shadow-lg transition-all hover:shadow-xl transform hover:scale-105"
                   >
                     Start Your Journey
